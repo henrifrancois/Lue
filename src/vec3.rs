@@ -111,8 +111,16 @@ impl Index<usize> for Vec3 {
 pub struct Color(Vec3);
 
 impl Color {
-    pub fn new(v: Vec3) -> Self {
+    pub fn new(x: f64, y: f64, z: f64) -> Self {
+        Color(Vec3::new(x,y,z))
+    }
+
+    pub fn new_vec(v: Vec3) -> Self {
         Color(v)
+    }
+
+    pub fn into_inner(self) -> Vec3 {
+        self.0
     }
 
     pub fn x(&self) -> f64 {
@@ -138,8 +146,16 @@ impl Color {
 pub struct Point3(Vec3);
 
 impl Point3 {
-    pub fn new(v: Vec3) -> Self {
+    pub fn new(x: f64, y: f64, z: f64) -> Self {
+        Point3(Vec3::new(x,y,z))
+    }
+
+    pub fn new_vec(v: Vec3) -> Self {
         Point3(v)
+    }
+
+    pub fn into_inner(self) -> Vec3 {
+        self.0
     }
 
     pub fn x(&self) -> f64 {
