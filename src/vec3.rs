@@ -1,9 +1,25 @@
 use std::ops::{Add, Sub, Mul, Div, Neg, Index};
+use crate::ray::Ray;
 
-#[derive(Clone, Copy)]
+#[inline(always)]
+fn clamp(x: f64, range: (f64, f64)) -> f64 {
+    if x < range.0 {
+        return range.0;
+    };
+    if x > range.1 {
+        return range.1;
+    };
+    return x;
+}
+
+
+#[derive(Clone, Copy, Debug)]
 pub struct Vec3 {
     inner: [f64; 3],
 }
+
+pub type Point3 = Vec3;
+pub type Color = Vec3;
 
 impl Vec3 {
     pub fn zero() -> Self {
@@ -32,8 +48,16 @@ impl Vec3 {
         self.inner.len()
     }
 
+    pub fn vlength(&self) -> f64 {
+        return self.vlength_squared().sqrt();
+    }
+
+    pub fn vlength_squared(&self) -> f64 {
+        return self.inner[0].powf(2.0) + self.inner[1].powf(2.0) + self.inner[2].powf(2.0);
+    }
+
     pub fn dot(&self, other: Self) -> f64 {
-        self.inner[0] * other.inner[0] + self.inner[1] + other.inner[1] + self.inner[2] + other.inner[2]
+        self.inner[0] * other.inner[0] + self.inner[1] * other.inner[1] + self.inner[2] * other.inner[2]
     }
 
     pub fn cross(&self, other: Self) -> Self {
@@ -50,6 +74,24 @@ impl Vec3 {
         let len = &self.len();
         return self / (*len as f64);
     } 
+
+    pub fn write_color(&self, samples: u32) {
+        let mut r = self.x();
+        let mut g = self.y();
+        let mut b = self.z();
+    
+        let scale = 1.0 / (samples as f64);
+        r = scale * r;
+        g = scale * g;
+        b = scale * b;
+    
+        println!("{} {} {}", 
+            (256 * clamp(r, (0.0, 0.999)) as u32),
+            (256 * clamp(g, (0.0, 0.999)) as u32),
+            (256 * clamp(b, (0.0, 0.999)) as u32)
+        );
+    }
+    
 }
 
 impl Neg for Vec3 {
@@ -107,67 +149,23 @@ impl Index<usize> for Vec3 {
     }
 }
 
-#[derive(Copy, Clone)]
-pub struct Color(Vec3);
+#[derive(Clone, Copy)]
+pub struct Hit {
+    pub point: Point3,
+    pub normal: Vec3,
+    pub t: f64,
+    pub front_face: bool
+}
 
-impl Color {
-    pub fn new(x: f64, y: f64, z: f64) -> Self {
-        Color(Vec3::new(x,y,z))
-    }
+pub trait Object {
+    fn hit(&self, ray: &Ray, range: (f64, f64), hit_record: &mut Hit) -> bool;
+}
 
-    pub fn new_vec(v: Vec3) -> Self {
-        Color(v)
-    }
-
-    pub fn into_inner(self) -> Vec3 {
-        self.0
-    }
-
-    pub fn x(&self) -> f64 {
-        self.0.x()
-    }
-
-    pub fn y(&self) -> f64 {
-        self.0.y()
-    }
-
-    pub fn z(&self) -> f64 {
-        self.0.z()
-    }
-
-    pub fn write_color(&self) {
-        println!("{} {} {}", 
-        255.999 * self.x(),
-        255.999 * self.y(),
-        255.999 * self.z())
+impl Hit {
+    #[inline(always)]
+    pub fn set_face_normal(&mut self, ray: &Ray, outward_normal: &Vec3) {
+        self.front_face = ray.direction().dot(*outward_normal) < 0.0;
+        self.normal =  if self.front_face == true {*outward_normal} else {-(*outward_normal)};
     }
 }
-#[derive(Copy, Clone)]
-pub struct Point3(Vec3);
 
-impl Point3 {
-    pub fn new(x: f64, y: f64, z: f64) -> Self {
-        Point3(Vec3::new(x,y,z))
-    }
-
-    pub fn new_vec(v: Vec3) -> Self {
-        Point3(v)
-    }
-
-    pub fn into_inner(self) -> Vec3 {
-        self.0
-    }
-
-    pub fn x(&self) -> f64 {
-        self.0.x()
-    }
-
-    pub fn y(&self) -> f64 {
-        self.0.y()
-    }
-
-    pub fn z(&self) -> f64 {
-        self.0.z()
-    }
-    
-}
